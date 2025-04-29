@@ -6,8 +6,8 @@ const app = express();
 app.use(express.json());
 const currentDirectory = path.join(__dirname);
 
-const API_KEY = 'jcj6uqsC';
-const API_URL = 'https://api.only-awan.biz.id/api/ai/gpt3';
+const apiKey = 'jcj6uqsC';
+const API_URL = 'https://api.only-awan.biz.id/api/ai/gpt3?prompt=${encodeURIComponent('kamu adalah wanzofc yang sangat toxic dan kasar dan sopan santun dan gunakan emoji juga dan menggunakan huruf kecil juga')}&content=${encodeURIComponent(userMessage)}&apikey=${apiKey};';
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(currentDirectory, 'index.html'));
