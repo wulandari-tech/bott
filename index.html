@@ -177,10 +177,10 @@ const showTypingEffect = (text, textElement, incomingMessageDiv) => {
 };
 
 const generateAPIResponse = async (incomingMessageDiv) => {
-    const API_URL = '/api/chatbot';
+    const apiUrl = '/api/chatbot';
     const textElement = incomingMessageDiv.querySelector(".text");
     try {
-        const response = await fetch(API_URL, {
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: userMessage })
