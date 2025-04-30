@@ -10,7 +10,6 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(process.cwd())));
-
 app.post('/api/chatbot', async (req, res) => {
     const userMessage = req.body.message;
     const apiKey = 'jcj6uqsC'; // Ganti dengan API key Anda jika berbeda
