@@ -3,12 +3,12 @@
     "version": "1.0.0",
     "description": "WANZOFC",
     "depecrated": false,
-    "main": "server.js",
+    "main": "index.js",
     "directories": {
         "lib": "lib"
     },
     "scripts": {
-        "start": "node server.js"
+        "start": "node index.js"
     },
     "license": "MIT",
     "dependencies": {
