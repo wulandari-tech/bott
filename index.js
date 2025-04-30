@@ -10,6 +10,7 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(process.cwd())));
+
 app.post('/api/chatbot', async (req, res) => {
     const userMessage = req.body.message;
     const apiKey = 'jcj6uqsC'; // Ganti dengan API key Anda jika berbeda
@@ -73,12 +74,5 @@ app.listen(port, host, () => {
             ++alias;
         });
     });
-
-    fetch('https://api.ipify.org?format=json')
-        .then(response => response.json())
-        .then(data => {
-            console.log(`Server juga dapat diakses melalui IP publik Anda: http://${data.ip}:${port}`);
-            console.log(`Server juga dapat diakses melalui IP Lokal Anda: http://${internalIP}:${port}`);
-        })
-        .catch(error => console.error('Error fetching public IP:', error));
+    console.log(`Server juga dapat diakses melalui IP Lokal Anda: http://${internalIP}:${port}`);
 });
