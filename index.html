@@ -6,7 +6,8 @@
     <title>gemini ai wanzofc</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
     <link rel="shortcut icon" href="./images/favicon.ico" type="image/x-icon" />
-    <style> @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
 
 * {
   margin: 0;
@@ -520,7 +521,45 @@ const showTypingEffect = (text, textElement, incomingMessageDiv) => {
     }, 75);
 };
 
-const backendUrl = '/api/chatbot';
+const generateAPIResponse = async (incomingMessageDiv) => {
+    const API_URL = '/api/chatbot';
+    const textElement = incomingMessageDiv.querySelector(".text");
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: userMessage })
+        });
+
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            const errorMessage = errorData.error || `Error ${response.status}: ${response.statusText}`;            
+            throw new Error(errorMessage);
+        }
+
+
+        const data = await response.json();
+
+
+        if (data && data.data && data.data.data) {
+            showTypingEffect(data.data.data, textElement, incomingMessageDiv);
+            simpanRiwayatChat(data.data.data);
+        } else {
+            console.error("Format respons API tidak valid:", data);
+            throw new Error("Format respons API tidak valid - Tidak ada data.data.data");
+        }
+
+    } catch (error) {
+        isResponseGenerating = false;
+        textElement.innerText = `Maaf, terjadi kesalahan: ${error.message}`;
+        textElement.parentElement.closest(".message").classList.add("error");
+        console.error("Error:", error);
+    } finally {
+        incomingMessageDiv.classList.remove("loading");
+    }
+};
 
 const showLoadingAnimation = () => {
   const html = `
@@ -625,71 +664,6 @@ function closeNav() {
     document.getElementById("mySidebar").style.width = "0";
     document.getElementById("main").style.marginLeft = "0";
 }
-
-        // GSAP Animations
-        gsap.from("#chatbot-container", { opacity: 0, duration: 1, y: 50 });
-        gsap.from("#chat-header", { opacity: 0, duration: 0.8, y: -20, delay: 0.5 });
-        gsap.from("#chat-log", { opacity: 0, duration: 0.8, delay: 0.7 });
-        gsap.from("#input-area", { opacity: 0, duration: 0.8, y: 20, delay: 0.9 });
-
-        sendButton.addEventListener('click', sendMessage);
-        userInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
-        });
-
-        async function sendMessage() {
-            const messageText = userInput.value.trim();
-            if (messageText !== '') {
-                addUserMessage(messageText);
-                await getBotResponse(messageText);
-                userInput.value = '';
-            }
-        }
-
-        function addUserMessage(message) {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('message', 'user-message');
-            messageElement.textContent = message;
-            chatLog.appendChild(messageElement);
-            scrollToBottom();
-        }
-
-        function addBotMessage(message) {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('message', 'bot-message');
-            messageElement.textContent = message;
-            chatLog.appendChild(messageElement);
-            scrollToBottom();
-        }
-
-        async function getBotResponse(userMessage) {
-            try {
-                const response = await fetch(backendUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ message: userMessage })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    addBotMessage(data.response);
-                } else {
-                    addBotMessage('Maaf, terjadi kesalahan: ' + data.error);
-                }
-            } catch (error) {
-                console.error('Error fetching bot response:', error);
-                addBotMessage('Maaf, saya tidak dapat terhubung ke server saat ini.');
-            }
-        }
-
-        function scrollToBottom() {
-            chatLog.scrollTop = chatLog.scrollHeight;
-        }
     </script>
 </body>
 </html>
