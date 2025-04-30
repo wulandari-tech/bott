@@ -6,6 +6,7 @@
     <title>gemini ai wanzofc</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
     <link rel="shortcut icon" href="./images/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="style.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
 
@@ -350,8 +351,8 @@ body.hide-header .header {
     margin-top: 0.5rem;
   }
 }
-</style>
-    <style>
+        </style>
+        <style>
 .sidebar {
     height: 100%;
     width: 0; /* Awalnya disembunyikan */
@@ -474,7 +475,6 @@ body.hide-header .header {
       gemini wanzofc mungkin menampilkan info yang tidak akurat, termasuk tentang orang, jadi periksa ulang jawabannya.
     </p>
   </div>
-  <script src="script.js"></script>
 <script>
 const typingForm = document.querySelector(".typing-form");
 const chatContainer = document.querySelector(".chat-list");
@@ -599,71 +599,188 @@ const handleOutgoingChat = () => {
             <img class="avatar" src="images/user.png" alt="User avatar">
             <p class="text">${userMessage}</p>
         </div>
-    `;  
-    const outgoingMessageDiv = createMessageElement(html, "outgoing");
-    chatContainer.appendChild(outgoingMessageDiv);
-    typingForm.reset();
-    document.body.classList.add("hide-header");
-    chatContainer.scrollTo(0, chatContainer.scrollHeight);
-    setTimeout(showLoadingAnimation, 500);
+ <script>
+const app = document.getElementById('app');
+let loadingIndicator = null;
+let messageHistory = loadMessageHistory(); // Muat riwayat pesan dari localStorage
+
+
+// --- Fungsi utilitas ---
+const createElement = (tag, className, content, attributes = {}) => {
+    const element = document.createElement(tag);
+    if (className) element.classList.add(...className.split(' ')); // Mendukung multiple class names
+    if (content) element.textContent = content;
+    for (const [key, value] of Object.entries(attributes)) {
+        element.setAttribute(key, value);
+    }
+    return element;
 };
 
-toggleThemeButton.addEventListener("click", () => {
-    const isLightMode = document.body.classList.toggle("light_mode");
-    localStorage.setItem("themeColor", isLightMode ? "light_mode" : "dark_mode");
-    toggleThemeButton.innerText = isLightMode ? "dark_mode" : "light_mode";
+const formatDate = (date) => {
+  return date.toLocaleString('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+  });
+};
+
+// --- Fungsi Loading Indicator ---
+
+const showLoading = () => {
+    if (loadingIndicator) return; // Hanya tampilkan jika belum ada
+
+    loadingIndicator = createElement('div', 'loading-indicator');
+    for (let i = 0; i < 3; i++) {
+        loadingIndicator.appendChild(createElement('div', 'loading-bar'));
+    }
+    app.querySelector('.chat-container').appendChild(loadingIndicator); // Tambahkan ke chat container
+};
+
+const hideLoading = () => {
+    if (loadingIndicator) {
+        loadingIndicator.remove(); // Hapus loading indicator dari DOM
+        loadingIndicator = null;
+    }
+};
+
+
+
+// --- Fungsi untuk Riwayat Pesan ---
+
+
+const loadMessageHistory = () => {
+    // Gunakan JSON.parse dengan try...catch untuk menangani kesalahan parsing
+   try{
+     return JSON.parse(localStorage.getItem('messageHistory')) || [];
+   } catch (error) {
+        console.error("Gagal parsing riwayat pesan:", error);
+        return []; // Kembalikan array kosong jika terjadi kesalahan
+    }
+};
+
+
+const saveMessageHistory = () => {
+  localStorage.setItem('messageHistory', JSON.stringify(messageHistory));
+};
+
+const displayMessageHistory = () => {
+    const chatContainer = app.querySelector('.chat-container');
+  chatContainer.innerHTML = ''; // Bersihkan container sebelum menambahkan pesan
+
+    messageHistory.forEach(({ message, sender, timestamp}) => {
+      addMessageToChat(message, sender, timestamp);
+  });
+};
+
+
+
+// --- Fungsi untuk Menambahkan Pesan ke Chat ---
+
+const addMessageToChat = (message, sender, timestamp = new Date()) => {
+    const chatContainer = app.querySelector('.chat-container');  // Pastikan chat container ada
+    const messageContainer = createElement('div', `message ${sender}`);
+    const avatar = createElement('img', 'avatar', '', {
+        src: sender === 'user' ? 'images/user.png' : 'images/gemini.svg',
+        alt: `${sender} avatar`
+    });
+
+    const messageContent = createElement('div', 'message-content');
+    messageContent.appendChild(avatar);
+
+    const messageText = createElement('p', 'text', message);
+
+  // Tambahkan timestamp
+  const timestampElement = createElement('span', 'timestamp', formatDate(timestamp));
+  messageContent.appendChild(messageText);
+  messageContent.appendChild(timestampElement);
+
+    messageContainer.appendChild(messageContent);
+    chatContainer.appendChild(messageContainer);
+    chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll ke bawah
+};
+
+
+// --- Fungsi untuk berkomunikasi dengan API ---
+const generateAPIResponse = async (userMessage) => {
+    showLoading();
+    const API_URL = '/api/chatbot';
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: userMessage })
+        });
+        if (!response.ok) {
+          const errorData = await response.json(); // Tangani response error dari server
+            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data.response;
+
+    } catch (error) {
+        console.error("Error:", error);
+        return `Error: ${error.message}`; // Tampilkan pesan error yang lebih informatif
+    } finally {
+        hideLoading();
+    }
+};
+
+
+// --- Fungsi untuk Mengirim Pesan ---
+
+const sendMessage = async () => {
+  const userInput = app.querySelector('.user-input'); // Gunakan querySelector untuk mencari elemen
+  const userMessage = userInput.value.trim();
+
+  if (!userMessage) return;
+
+    // Tambahkan pesan ke riwayat
+   const timestamp = new Date();
+    messageHistory.push({ message: userMessage, sender: 'user', timestamp });
+    saveMessageHistory();
+
+
+  addMessageToChat(userMessage, 'user', timestamp);
+  userInput.value = '';
+
+
+  const botResponse = await generateAPIResponse(userMessage);
+
+
+   // Tambahkan pesan bot ke riwayat
+    messageHistory.push({ message: botResponse, sender: 'bot', timestamp });
+    saveMessageHistory();
+
+    addMessageToChat(botResponse, 'bot', timestamp);
+};
+
+
+// --- Event Listener untuk Tombol "Kirim" dan Enter ---
+
+app.addEventListener('click', (event) => {
+    if (event.target.classList.contains('send-button')) {
+        sendMessage();
+  }
 });
 
-deleteChatButton.addEventListener("click", () => {
- if (confirm("Apakah Anda yakin ingin menghapus semua chat?")) {
-        localStorage.removeItem("saved-chats");
-        localStorage.removeItem("riwayatChat");
-        loadDataFromLocalstorage();
-        tampilkanRiwayatChat();
+
+app.addEventListener('keypress', (event) => {
+    if (event.target.classList.contains('user-input') && event.key === 'Enter') {
+        sendMessage();
     }
 });
 
-suggestions.forEach(suggestion => {
-    suggestion.addEventListener("click", () => {
-        userMessage = suggestion.querySelector(".text").innerText;
-        handleOutgoingChat();
-    });
-});
-
-typingForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    handleOutgoingChat();
-});
+// --- Inisialisasi tampilan awal ---
+app.appendChild(createElement('div', 'chat-container')); // Tambahkan chat container
+app.appendChild(createElement('div', 'input-area'));
+app.querySelector('.input-area').appendChild(createElement('input', 'user-input', '', { type: 'text', placeholder: 'Ketik pesan...' }));
+app.querySelector('.input-area').appendChild(createElement('button', 'send-button', 'Kirim'));
 
 
-function simpanRiwayatChat(pesan) {
-    let riwayatChat = JSON.parse(localStorage.getItem('riwayatChat')) || [];
-    riwayatChat.push({ user: userMessage, ai: pesan });
-    localStorage.setItem('riwayatChat', JSON.stringify(riwayatChat));
-    tampilkanRiwayatChat();
-}
 
-function tampilkanRiwayatChat() {
-    let riwayatChat = JSON.parse(localStorage.getItem('riwayatChat')) || [];
-    riwayatChatList.innerHTML = '';
-  riwayatChat.forEach(pesan => {
-        const listItem = document.createElement('li');
-        listItem.textContent = `Anda: ${pesan.user}\nAI: ${pesan.ai}`;
-        riwayatChatList.appendChild(listItem);
-    });
-}
-
-window.addEventListener('load', loadDataFromLocalstorage);
-
-function openNav() {
-    document.getElementById("mySidebar").style.width = "250px";
-  document.getElementById("main").style.marginLeft = "250px";
-}
-
-function closeNav() {
-    document.getElementById("mySidebar").style.width = "0";
-    document.getElementById("main").style.marginLeft = "0";
-}
+displayMessageHistory(); // Tampilkan riwayat pesan saat halaman dimuat
     </script>
 </body>
 </html>
