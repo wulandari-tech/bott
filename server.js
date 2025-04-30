@@ -1,8 +1,8 @@
-import express from 'express';
-import cors from 'cors';
-import fetch from 'node-fetch';
-import path from 'path';
-import os from 'os';
+const express = require('express');
+const cors = require('cors');
+const fetch = require('node-fetch');
+const path = require('path');
+const os = require('os');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -33,11 +33,11 @@ app.post('/api/chatbot', async (req, res) => {
             });
         } else {
             console.error('Error from API:', data);
-            res.status(500).json({ error: 'Terjadi kesalahan saat memproses permintaan.', data: data }); // Sertakan data dalam response error
+            res.status(500).json({ error: 'Terjadi kesalahan saat memproses permintaan.', data: data });
         }
     } catch (error) {
         console.error('Error fetching bot response:', error);
-        res.status(500).json({ error: 'Gagal terhubung ke server AI.', details: error.message }); // Sertakan detail error
+        res.status(500).json({ error: 'Gagal terhubung ke server AI.', details: error.message });
     }
 });
 
